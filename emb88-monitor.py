@@ -3,6 +3,9 @@ gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Gdk, Pango
 
 import binascii
+import serial
+import sys
+import time
 
 class EntryWindow(Gtk.Window):
 
@@ -88,35 +91,56 @@ class EntryWindow(Gtk.Window):
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
 
     def on_key_release(self, widget, ev, data=None):
+        #print(ev.keyval)
         if ev.keyval == Gdk.KEY_Return:
             #print(widget.name)
             #print(widget.adr)
             #print(widget.get_text())
-            tmp1 = widget.adr
-            tmp2 = int( widget.get_text(), 16)
-            msg = tmp1.to_bytes(1,'big')+b'\x01'+tmp2.to_bytes(1,'big')
-            print(binascii.hexlify(msg))
-            # ここで送信する★★
-        if ev.keyval == Gdk.KEY_Tab:
-            print('ここで更新')
-        if ev.keyval == Gdk.KEY_Up:
-            print('ここで更新')
-        if ev.keyval == Gdk.KEY_Down:
-            print('ここで更新')
-        if ev.keyval == 65056: ## Shift TAB
-            print('[SHIFT+TAB]')
-        print(ev.keyval)
+            val = int( widget.get_text(), 16)
+            self.write_reg( widget.adr, val )
+            print('W:',val)
+
+        if ev.keyval == Gdk.KEY_Tab or ev.keyval == Gdk.KEY_Up or ev.keyval == Gdk.KEY_Down or ev.keyval == 65056:   # 65056: Shift+TAB
+            val = self.read_reg( widget.adr )
+            widget.set_text('%02X' % val)
 
     def on_button_release(self, widget, ev, data=None):
         #print(widget.name)
         #print(widget.adr)
         #print(widget.get_text())
-        tmp1 = widget.adr
-        msg = tmp1.to_bytes(1,'big')+b'\x00'
-        print(binascii.hexlify(msg))
-        # ここで受信したバイトデータをGUIに書く★★
+        val = self.read_reg( widget.adr )
+        widget.set_text('%02X' % val)
+        #print(hex(val))
+
+    def read_reg(self, adr):
+        sdev.write(b'\x00')
+        sdev.flush()
+        time.sleep(0.01)
+        sdev.write(adr.to_bytes(1,'big'))
+        sdev.flush()
+        time.sleep(0.01)
+        c = sdev.read()
+        return int.from_bytes(c,'big')
+
+    def write_reg(self, adr, val):
+        sdev.write(b'\x01')
+        sdev.flush()
+        time.sleep(0.01)
+        sdev.write(adr.to_bytes(1,'big'))
+        sdev.flush()
+        time.sleep(0.01)
+        sdev.write(val.to_bytes(1,'big'))
+        sdev.flush()
 
 win = EntryWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
+
+sdev = serial.Serial('/dev/emb88',38400, timeout=1)
+time.sleep(0.1)
+# buffer flush
+sdev.reset_input_buffer()
+sdev.reset_output_buffer()
+time.sleep(0.1)
+
 Gtk.main()
