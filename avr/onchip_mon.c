@@ -1,10 +1,10 @@
-#include<avr/io.h>
+/* 
+ * Author: Daisuke Takago, Yuta Kobayashi (Takago Lab.2019)
+ */
+
+#include <avr/io.h>
 #include <avr/interrupt.h>
 
-unsigned int n = 0;
-unsigned int c[4];
-unsigned int *p;
-int flag = 0;
 /* 割り込み処理未定義時にハングアップするのを防止 */
 __attribute__((weak)) ISR(INT0_vect){}
 __attribute__((weak)) ISR(INT1_vect){}
@@ -44,7 +44,7 @@ ISR(USART_RX_vect) //__attribute__((weak))を付けると動かない
         return;
     case 1: // IOレジスタ情報の受信待ち
         p = UDR0;        // レジスタアドレス取得  
-        if(rw == 0){  // 読み出し処理のときは　
+        if(rw == 0){  // 読み出し処理のときは
             UDR0 = *p;  // IOレジスタの値を取り出して送信
             stat=0;
             return;   
@@ -59,7 +59,7 @@ ISR(USART_RX_vect) //__attribute__((weak))を付けると動かない
 }
 
 /* main()の前に自動的に実行する */
-__attribute__((constructor)) void moni()
+__attribute__((constructor)) void pre_main()
 {
     /* USART設定 */
     UCSR0C = 3 << UCSZ00;
