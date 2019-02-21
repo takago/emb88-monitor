@@ -1,3 +1,6 @@
+# EMB88 Monitor
+# Author: Daisuke Takago, Yuta Kobayashi (Takago Lab.2019)
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Gdk, Pango
@@ -98,7 +101,6 @@ class EntryWindow(Gtk.Window):
             #print(widget.get_text())
             val = int( widget.get_text(), 16)
             self.write_reg( widget.adr, val )
-            print('W:',val)
 
         if ev.keyval == Gdk.KEY_Tab or ev.keyval == Gdk.KEY_Up or ev.keyval == Gdk.KEY_Down or ev.keyval == 65056:   # 65056: Shift+TAB
             val = self.read_reg( widget.adr )
