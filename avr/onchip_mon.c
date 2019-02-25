@@ -4,6 +4,7 @@
 
 #include <avr/io.h>
 #include <avr/interrupt.h>
+#include <avr/wdt.h>
 
 /* 割り込み処理未定義時にハングアップするのを防止 */
 __attribute__((weak)) ISR(INT0_vect){}
@@ -34,7 +35,7 @@ __attribute__((weak)) ISR(SPM_Ready_vect){}
 ISR(USART_RX_vect) //__attribute__((weak))を付けると動かない
 {
     static unsigned int stat = 0;
-    static unsigned int rw;
+    static unsigned int rw, v16;
     static unsigned int *p; // IOレジスタのアドレス
     
     switch(stat){
@@ -45,14 +46,45 @@ ISR(USART_RX_vect) //__attribute__((weak))を付けると動かない
     case 1: // IOレジスタ情報の受信待ち
         p = UDR0;        // レジスタアドレス取得  
         if(rw == 0){  // 読み出し処理のときは
-            UDR0 = *p;  // IOレジスタの値を取り出して送信
+            if( p==0x84 || p==0x8a || p==0x88 ){ // 16ビットレジスタについては
+                if( p==0x84){
+                    v16=TCNT1;
+                }else if( p==0x8a ){
+                    v16=OCR1B;
+                }else if ( p==0x88 ){
+                    v16=OCR1A;                
+                }
+                UDR0 = v16; // 下位バイト送信
+                while((UCSR0A & _BV(UDRE0))==0){ // 送信器の空きを待つ
+                    wdt_reset();
+                }
+                UDR0 = v16 >> 8; // 上位バイト送信
+            }
+            else{
+                UDR0 = *p;  // IOレジスタの値を取り出して送信
+            }
             stat=0;
             return;   
         }
         stat=2;
         return;
     case 2:  // 書き込みデータの到着待ちの状態
-        *p = UDR0;  // IOレジスタに書き込み
+        if( p==0x84 || p==0x8a || p==0x88 ){ // 16ビットレジスタについては
+            v16 = UDR0 << 8; // 上位バイト取り出し
+            while((UCSR0A & _BV(RXC0))==0){ // 受信待ち
+                wdt_reset();
+            }
+            v16 |=  UDR0;  // 下位バイト取りだし
+            if( p==0x84){
+                TCNT1=v16;
+            }else if( p==0x8a ){
+                OCR1B=v16;
+            }else if ( p==0x88 ){
+                OCR1A=v16;                
+            }
+        }else{
+            *p = UDR0;  // IOレジスタに書き込み
+        }        
         stat=0;
         return;
     }
