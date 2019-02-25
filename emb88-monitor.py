@@ -4,28 +4,28 @@
 # メモ：
 # 16bitレジスタの書き込みは，上位1，下位0の順
 # 16bitレジスタの読み出しは，下位0・上位1の順に読み出すことが決まっている
-# monitorも改造して16bit読み出し命令に対応しないといえｋないかも
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Gdk, Pango, GObject, GdkPixbuf
+from gi.repository import Gtk, GLib, Gdk, Pango, GObject
 
 import binascii
 import serial
 import sys
 import time
 
+update_interval_ms=100
+col=[Gdk.Color(0, 0x7a*256,0xbb *256), Gdk.Color(60000, 60000, 60000)]
+
 class EntryWindow(Gtk.Window):
 
     def __init__(self):
-        Gtk.Window.__init__(self, title="EMB88 Monitor -- Takago Lab. --")
-        self.timeout_id = None
-        self.last_widget = None
-
+        Gtk.Window.__init__(self, title="EMB88 Monitor (TAKAGO_LAB. 2019)")
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
 
         reg_names=[
+            [{'name':'\n(1) GPIO'}],
             [{'name':'DDRB','adr':[0x24]},
              {'name':'DDRC','adr':[0x27]},
              {'name':'DDRD','adr':[0x2a]},
@@ -38,11 +38,21 @@ class EntryWindow(Gtk.Window):
              {'name':'PINC','adr':[0x26]},
              {'name':'PIND','adr':[0x29]}
             ],
+            [{'name':'\n(2) Pin change interrupt'}],
             [{'name':'PCMSK0','adr':[0x6b]},
              {'name':'PCMSK1','adr':[0x6c]},
              {'name':'PCMSK2','adr':[0x6d]},
              {'name':'PCICR','adr':[0x68]},
              {'name':'PCIFR','adr':[0x3b]},
+            ],
+            [{'name':'\n(3) 8bit timers'}],
+            [{'name':'TCNT0','adr':[0x46]},
+             {'name':'OCR0B','adr':[0x48]},
+             {'name':'OCR0A','adr':[0x47]},
+             {'name':'TCCR0B','adr':[0x45]},
+             {'name':'TCCR0A','adr':[0x44]},
+             {'name':'TIFR0','adr':[0x35]},
+             {'name':'TIMSK0','adr':[0x6e]},
             ],
             [{'name':'TCNT2','adr':[0xb2]},
              {'name':'OCR2B','adr':[0xb4]},
@@ -52,6 +62,7 @@ class EntryWindow(Gtk.Window):
              {'name':'TIFR2','adr':[0x37]},
              {'name':'TIMSK2','adr':[0x70]},
             ],
+            [{'name':'\n(4) 16bit timer'}],
             [{'name':'TCNT1','adr':[0x84,0x85]}, # TCNT1H:0x85, TCNT1L:0x84
              {'name':'OCR1B','adr':[0x8a,0x8b]}, # OCR1BH:0x8B, OCR1BL:0x8A
              {'name':'OCR1A','adr':[0x88,0x89]}, # OCR1AH:0x89, OCR1AL:0x88
@@ -61,30 +72,25 @@ class EntryWindow(Gtk.Window):
              {'name':'TIFR1','adr':[0x36]},
              {'name':'TIMSK1','adr':[0x6f]},
             ],
-            [{'name':'TCNT0','adr':[0x46]},
-             {'name':'OCR0B','adr':[0x48]},
-             {'name':'OCR0A','adr':[0x47]},
-             {'name':'TCCR0B','adr':[0x45]},
-             {'name':'TCCR0A','adr':[0x44]},
-             {'name':'TIFR0','adr':[0x35]},
-             {'name':'TIMSK0','adr':[0x6e]},
-            ],
+            [{'name':''}],
             ]
 
         self.entry={}
         for xx in reg_names:
-            hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-            vbox.pack_start(hseparator, True, True, 0)
+#            hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+#            vbox.pack_start(hseparator, True, True, 0)
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
             vbox.pack_start(hbox, True, True, 0)
             for x in xx:
                 reg_name=x['name']
-                reg_adr=x['adr']
-                N=len(reg_adr)
                 lbl = Gtk.Label(reg_name)
-                lbl.modify_font(Pango.FontDescription('Dejavu Sans Mono 16'))
+                lbl.modify_font(Pango.FontDescription('Inconsolata 20'))
                 lbl.set_width_chars(7)
                 hbox.pack_start(lbl, False, False, 0)
+                if len(x)==1:
+                    continue
+                reg_adr=x['adr']
+                N=len(reg_adr)
                 self.entry[reg_name]=Gtk.Entry()
                 self.entry[reg_name].name=reg_name # オブジェクトに値を持たせる
                 self.entry[reg_name].adr=reg_adr[0] # オブジェクトに値を持たせる
@@ -93,19 +99,16 @@ class EntryWindow(Gtk.Window):
                 self.entry[reg_name].set_text('UU'*N)
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
-                self.entry[reg_name].modify_font(Pango.FontDescription('Dejavu Sans Mono 20'))
-                self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
-                self.entry[reg_name].modify_fg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
+                self.entry[reg_name].modify_font(Pango.FontDescription('Inconsolata 24'))
+                self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[0])
+                self.entry[reg_name].modify_fg(Gtk.StateType.NORMAL, col[1])
                 self.entry[reg_name].connect("key-release-event", self.on_key_release)
                 self.entry[reg_name].connect("button-release-event", self.on_button_release)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
+        GObject.timeout_add(1000, self.mytimer)
 
-    def displayclock(self):
-        self.startclocktimer()
-        if False:
-            widget=self.last_widget
-            if widget==None:
-                return
+    def mytimer(self):
+        GObject.timeout_add(update_interval_ms, self.mytimer)
         for k,widget in self.entry.items():
             if widget.editable==True:
                 continue
@@ -115,36 +118,40 @@ class EntryWindow(Gtk.Window):
             else:
                 widget.set_text('%02X' % val)
 
-    def startclocktimer(self):
-		#  this takes 2 args: (how often to update in millisec, the method to run)
-        GObject.timeout_add(100, self.displayclock)
-
     def on_key_release(self, widget, ev, data=None):
-        self.last_widget=widget
         #print(ev.keyval)
+        #print(widget.name)
+        #print(widget.adr)
+        #print(widget.get_text())
 
-        # [ESC]で入力モードに以降
+        # [ESC]で入力モードを抜ける
         if ev.keyval == Gdk.KEY_Escape:
-            widget.editable=True
-            widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
-            widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
-
-        # [ENTER]で書き込み
-        if ev.keyval == Gdk.KEY_Return:
             widget.editable=False
-            widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
-            widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
-            #print(widget.name)
-            #print(widget.adr)
-            #print(widget.get_text())
-            val = int( widget.get_text(), 16)
-            self.write_reg( widget.adr, val, widget.N )
+            widget.modify_bg(Gtk.StateType.NORMAL, col[0])
+            widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+
+        # [ENTER]で書き込みモードのON/OFF
+        if ev.keyval == Gdk.KEY_Return:
+            if widget.editable==True:
+                widget.editable=False
+                widget.modify_bg(Gtk.StateType.NORMAL, col[0])
+                widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+                val = int( widget.get_text(), 16)
+                self.write_reg( widget.adr, val, widget.N )
+            else:
+                widget.editable=True
+                widget.modify_fg(Gtk.StateType.NORMAL, col[0])
+                widget.modify_bg(Gtk.StateType.NORMAL, col[1])
 
     def on_button_release(self, widget, ev, data=None):
-        self.last_widget=widget
-        widget.editable=True
-        widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
-        widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
+            if widget.editable==True:
+                widget.editable=False
+                widget.modify_bg(Gtk.StateType.NORMAL, col[0])
+                widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+            else:
+                widget.editable=True
+                widget.modify_fg(Gtk.StateType.NORMAL, col[0])
+                widget.modify_bg(Gtk.StateType.NORMAL, col[1])
 
     def read_reg(self, adr, N):
         sdev.write(b'\x00')
@@ -177,5 +184,4 @@ time.sleep(0.1)
 sdev.reset_input_buffer()
 sdev.reset_output_buffer()
 time.sleep(0.1)
-win.startclocktimer() # タイマー
 Gtk.main()
