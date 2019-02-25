@@ -8,7 +8,7 @@
 
 import gi
 gi.require_version('Gtk', '3.0')
-from gi.repository import Gtk, GLib, Gdk, Pango, GObject
+from gi.repository import Gtk, GLib, Gdk, Pango, GObject, GdkPixbuf
 
 import binascii
 import serial
@@ -89,64 +89,62 @@ class EntryWindow(Gtk.Window):
                 self.entry[reg_name].name=reg_name # オブジェクトに値を持たせる
                 self.entry[reg_name].adr=reg_adr[0] # オブジェクトに値を持たせる
                 self.entry[reg_name].N=N # オブジェクトに値を持たせる
+                self.entry[reg_name].editable=False
                 self.entry[reg_name].set_text('UU'*N)
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
                 self.entry[reg_name].modify_font(Pango.FontDescription('Dejavu Sans Mono 20'))
+                self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
+                self.entry[reg_name].modify_fg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
                 self.entry[reg_name].connect("key-release-event", self.on_key_release)
                 self.entry[reg_name].connect("button-release-event", self.on_button_release)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
 
     def displayclock(self):
+        self.startclocktimer()
         if False:
             widget=self.last_widget
             if widget==None:
-                self.startclocktimer()
                 return
         for k,widget in self.entry.items():
+            if widget.editable==True:
+                continue
             val=self.read_reg( widget.adr, widget.N)
             if widget.N==2:
                 widget.set_text('%04X' % val)
             else:
                 widget.set_text('%02X' % val)
-        self.startclocktimer()
 
     def startclocktimer(self):
 		#  this takes 2 args: (how often to update in millisec, the method to run)
-        GObject.timeout_add(200, self.displayclock)
+        GObject.timeout_add(100, self.displayclock)
 
     def on_key_release(self, widget, ev, data=None):
         self.last_widget=widget
         #print(ev.keyval)
 
+        # [ESC]で入力モードに以降
+        if ev.keyval == Gdk.KEY_Escape:
+            widget.editable=True
+            widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
+            widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
+
         # [ENTER]で書き込み
         if ev.keyval == Gdk.KEY_Return:
+            widget.editable=False
+            widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
+            widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
             #print(widget.name)
             #print(widget.adr)
             #print(widget.get_text())
             val = int( widget.get_text(), 16)
             self.write_reg( widget.adr, val, widget.N )
 
-        # カーソル移動のときは単なる読み出し
-        if ev.keyval == Gdk.KEY_Tab or ev.keyval == Gdk.KEY_Up or ev.keyval == Gdk.KEY_Down or ev.keyval == 65056:   # 65056: Shift+TAB
-            val=self.read_reg( widget.adr, widget.N)
-            if widget.N==2:
-                widget.set_text('%04X' % val)
-            else:
-                widget.set_text('%02X' % val)
-
     def on_button_release(self, widget, ev, data=None):
         self.last_widget=widget
-
-        #print(widget.name)
-        #print(widget.adr)
-        #print(widget.get_text())
-        # ボタンを押されたら読み出し
-        val=self.read_reg( widget.adr, widget.N )
-        if widget.N==2:
-            widget.set_text('%04X' % val)
-        else:
-            widget.set_text('%02X' % val)
+        widget.editable=True
+        widget.modify_fg(Gtk.StateType.NORMAL, Gdk.Color(200, 100,100))
+        widget.modify_bg(Gtk.StateType.NORMAL, Gdk.Color(60000, 60000, 60000))
 
     def read_reg(self, adr, N):
         sdev.write(b'\x00')
