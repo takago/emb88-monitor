@@ -14,7 +14,7 @@ import serial
 import sys
 import time
 
-update_interval_ms=100
+update_interval_ms=50
 col=[Gdk.Color(0, 0x7a*256,0xbb *256), Gdk.Color(60000, 60000, 60000)]
 
 class EntryWindow(Gtk.Window):
