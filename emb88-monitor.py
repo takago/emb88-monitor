@@ -143,6 +143,13 @@ class EntryWindow(Gtk.Window):
                 widget.modify_fg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_bg(Gtk.StateType.NORMAL, col[1])
 
+        # [DEL]や[BS]で消去
+        if ev.keyval == Gdk.KEY_Delete or ev.keyval == Gdk.KEY_BackSpace:
+            widget.editable=True
+            widget.modify_fg(Gtk.StateType.NORMAL, col[0])
+            widget.modify_bg(Gtk.StateType.NORMAL, col[1])
+            widget.set_text('')
+
     def on_button_release(self, widget, ev, data=None):
             if widget.editable==True:
                 widget.editable=False

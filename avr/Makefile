@@ -1,9 +1,17 @@
 # ここにビルドに必要なCソースファイル名を並べる
 # （例： SRCS = src1.c src2. src3.c と書く）
-SRCS = list2_22.c onchip_mon.c
+
+SRCS = list2_22.c
+
+# モニタプログラムを使うときは1にする（ユーザプログラムでシリアル通信を行うときは0にすること）
+MONITOR = 1
 
 #--------------------------------------------
 # ここから下は理由がない限り書き換えない
+
+ifeq (${MONITOR},1)
+	SRCS += onchip_mon.c
+endif
 
 # プロジェクト名にはカレントディレクトリ名を割当
 PROJECT =   $(notdir $(CURDIR))
