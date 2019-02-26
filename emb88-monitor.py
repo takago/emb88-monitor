@@ -1,3 +1,5 @@
+#! /usr/bin/python3
+
 # EMB88 Monitor
 # Author: Daisuke Takago, Yuta Kobayashi (Takago Lab.2019)
 

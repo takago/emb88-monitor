@@ -18,7 +18,9 @@ BAUD = 38400
 
 OBJECTS = $(SRCS:.c=.o)
 ifeq (${MON},1)
-	OBJECTS += onchip_mon.o
+	MONITOR_OBJ = /usr/local/lib/avr/lib/onchip_mon.o
+else
+	MONITOR_OBJ =
 endif
 MPU = atmega88pa
 F_CPU = 8000000UL
@@ -42,7 +44,7 @@ LDFLAGS = -mmcu=${MPU} -Wl,-Map=${MAPFILE}
 all: clean ${HEXFILE}
 
 ${HEXFILE}: ${OBJECTS}
-	avr-gcc ${LDFLAGS} ${OBJECTS} -o ${ELFFILE}
+	avr-gcc ${LDFLAGS} ${OBJECTS} ${MONITOR_OBJ} -o ${ELFFILE}
 	avr-objcopy -j.text -j.data -O ihex ${ELFFILE} ${HEXFILE}
 	avr-objcopy -j.eeprom --set-section-flags=.eeprom="alloc,load" --change-section-lma .eeprom=0 --no-change-warnings -O ihex ${ELFFILE} ${EEPFILE}
 	avr-objdump -h -S ${ELFFILE} > ${LSSFILE}

@@ -13,7 +13,7 @@ ISR(USART_RX_vect)
     static unsigned char stat = 0;
     static unsigned char rw;
     static unsigned int p; // IOレジスタのアドレス(16bit)
-    static unsigned int v16,pre_adc;
+    static unsigned int v16;
     
     switch(stat){
     case 0: // 初期状態
