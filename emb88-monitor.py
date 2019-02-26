@@ -82,28 +82,28 @@ class MonitorWindow(Gtk.Window):
             ],
             [{'name':'\n(3) 8bit timers'}],
             [{'name':'TCNT0','adr':[0x46],'wr':True},
-             {'name':'OCR0B','adr':[0x48],'wr':True},
              {'name':'OCR0A','adr':[0x47],'wr':True},
-             {'name':'TCCR0B','adr':[0x45],'wr':True},
+             {'name':'OCR0B','adr':[0x48],'wr':True},
              {'name':'TCCR0A','adr':[0x44],'wr':True},
+             {'name':'TCCR0B','adr':[0x45],'wr':True},
              {'name':'TIFR0','adr':[0x35],'wr':True},
              {'name':'TIMSK0','adr':[0x6e],'wr':True},
             ],
             [{'name':'TCNT2','adr':[0xb2],'wr':True},
-             {'name':'OCR2B','adr':[0xb4],'wr':True},
              {'name':'OCR2A','adr':[0xb3],'wr':True},
-             {'name':'TCCR2B','adr':[0xb1],'wr':True},
+             {'name':'OCR2B','adr':[0xb4],'wr':True},
              {'name':'TCCR2A','adr':[0xb0],'wr':True},
+             {'name':'TCCR2B','adr':[0xb1],'wr':True},
              {'name':'TIFR2','adr':[0x37],'wr':True},
              {'name':'TIMSK2','adr':[0x70],'wr':True},
             ],
             [{'name':'\n(4) 16bit timer'}],
             [{'name':'TCNT1','adr':[0x84,0x85],'wr':True}, # TCNT1H:0x85, TCNT1L:0x84
-             {'name':'OCR1B','adr':[0x8a,0x8b],'wr':True}, # OCR1BH:0x8B, OCR1BL:0x8A
              {'name':'OCR1A','adr':[0x88,0x89],'wr':True}, # OCR1AH:0x89, OCR1AL:0x88
-             {'name':'TCCR1C','adr':[0x82],'wr':True},
-             {'name':'TCCR1B','adr':[0x81],'wr':True},
+             {'name':'OCR1B','adr':[0x8a,0x8b],'wr':True}, # OCR1BH:0x8B, OCR1BL:0x8A
              {'name':'TCCR1A','adr':[0x80],'wr':True},
+             {'name':'TCCR1B','adr':[0x81],'wr':True},
+             #{'name':'TCCR1C','adr':[0x82],'wr':True},
              {'name':'TIFR1','adr':[0x36],'wr':True},
              {'name':'TIMSK1','adr':[0x6f],'wr':True},
             ],
@@ -111,8 +111,8 @@ class MonitorWindow(Gtk.Window):
             [{'name':'ADC','adr':[0x78,0x79],'wr':False}, # ADCH:0x79, ADCL:0x78
              {'name':'DIDR0','adr':[0x7e],'wr':True},
              {'name':'ADMUX','adr':[0x7c],'wr':True},
-             {'name':'ADCSRB','adr':[0x7b],'wr':True},
              {'name':'ADCSRA','adr':[0x7c],'wr':True},
+             {'name':'ADCSRB','adr':[0x7b],'wr':True},
             ],
             ]
 
