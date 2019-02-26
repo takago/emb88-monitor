@@ -21,11 +21,25 @@ import serial
 import sys
 import time
 import signal
-
+import os
 serial_dev='/dev/emb88'
 serial_baud=38400
-update_interval_ms=200 # 短くすると止まりやすいので注意（特にVMwareでは遅くする必要あり）
+
+fnt='Inconsolata 18'
 col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333333')]
+
+# レジスタ値の更新間隔(update_interval_ms)の設定
+#  短くすると止まりやすい．また，VMwareでは遅くする必要がある
+vm_cmd='/usr/bin/vmware-checkvm'
+if os.path.exists(vm_cmd)==False:
+    update_interval_ms=50
+else:
+    if os.system(vm_cmd)!=0:
+        update_interval_ms=50
+    else:
+        update_interval_ms=200
+
+
 
 def setup_serial():
     global sdev
@@ -111,7 +125,7 @@ class MonitorWindow(Gtk.Window):
             for x in xx:
                 reg_name=x['name']
                 lbl = Gtk.Label(reg_name)
-                lbl.modify_font(Pango.FontDescription('Inconsolata 20'))
+                lbl.modify_font(Pango.FontDescription(fnt))
                 lbl.set_width_chars(7)
                 lbl.set_xalign(0.9) # 右寄りでラベル表示
                 hbox.pack_start(lbl, False, False, 0)
@@ -129,7 +143,7 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].set_text('UU'*N)
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
-                self.entry[reg_name].modify_font(Pango.FontDescription('Inconsolata 24'))
+                self.entry[reg_name].modify_font(Pango.FontDescription(fnt))
                 if wr==True:
                     self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[0])
                 else:
@@ -141,7 +155,7 @@ class MonitorWindow(Gtk.Window):
         hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         vbox.pack_start(hseparator, True, True, 0)
         lbl = Gtk.Label('DEV:'+serial_dev+' BAUD:'+str(serial_baud)+' [Takago Lab.2019]')
-        lbl.modify_font(Pango.FontDescription('Inconsolata 20'))
+        lbl.modify_font(Pango.FontDescription(fnt))
         lbl.set_xalign(1) # 右寄りでラベル表示
         vbox.pack_start(lbl, False, False, 0)
         # タイマースタート
