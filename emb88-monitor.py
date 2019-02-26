@@ -34,7 +34,7 @@ def setup_serial():
 class MonitorWindow(Gtk.Window):
 
     def __init__(self):
-        Gtk.Window.__init__(self, title="EMB88 Monitor (TAKAGO_LAB. 2019)")
+        Gtk.Window.__init__(self, title='EMB88 Monitor')
         vbox = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         self.add(vbox)
 
@@ -93,7 +93,6 @@ class MonitorWindow(Gtk.Window):
              {'name':'ADCSRB','adr':[0x7b],'wr':True},
              {'name':'ADCSRA','adr':[0x7c],'wr':True},
             ],
-            [{'name':''}],
             ]
 
         self.entry={}
@@ -133,6 +132,13 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].connect("key-release-event", self.on_key_release)
                 self.entry[reg_name].connect("button-release-event", self.on_button_release)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
+        hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+        vbox.pack_start(hseparator, True, True, 0)
+        lbl = Gtk.Label('DEV:'+serial_dev+' BAUD:'+str(serial_baud)+' [Takago Lab.2019]')
+        lbl.modify_font(Pango.FontDescription('Inconsolata 20'))
+        lbl.set_xalign(1) # 右寄りでラベル表示
+        vbox.pack_start(lbl, False, False, 0)
+        # タイマースタート
         GObject.timeout_add(1000, self.mytimer)
 
     def mytimer(self):
