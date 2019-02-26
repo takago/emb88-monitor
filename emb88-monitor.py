@@ -72,6 +72,13 @@ class EntryWindow(Gtk.Window):
              {'name':'TIFR1','adr':[0x36]},
              {'name':'TIMSK1','adr':[0x6f]},
             ],
+            [{'name':'\n(5) ADC'}],
+            [{'name':'ADC','adr':[0x78,0x79]}, # ADCH:0x79, ADCL:0x78
+             {'name':'DIDR0','adr':[0x7e]},
+             {'name':'ADMUX','adr':[0x7c]},
+             {'name':'ADCSRB','adr':[0x7b]},
+             {'name':'ADCSRA','adr':[0x7c]},
+            ],
             [{'name':''}],
             ]
 
@@ -86,6 +93,7 @@ class EntryWindow(Gtk.Window):
                 lbl = Gtk.Label(reg_name)
                 lbl.modify_font(Pango.FontDescription('Inconsolata 20'))
                 lbl.set_width_chars(7)
+                lbl.set_xalign(0.9) # 右寄りでラベル表示
                 hbox.pack_start(lbl, False, False, 0)
                 if len(x)==1:
                     continue

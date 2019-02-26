@@ -1,17 +1,14 @@
 # ここにビルドに必要なCソースファイル名を並べる
 # （例： SRCS = src1.c src2. src3.c と書く）
 
-SRCS = test.c
+SRCS = list2_22.c
 
-# モニタプログラムを使うときは1にする（ユーザプログラムでシリアル通信を行うときは0にすること）
-MONITOR = 1
+# モニタを使うときは1にする
+#（ユーザプログラムでシリアル通信を行う場合は0にする）
+MON = 1
 
 #--------------------------------------------
 # ここから下は理由がない限り書き換えない
-
-ifeq (${MONITOR},1)
-	SRCS += onchip_mon.c
-endif
 
 # プロジェクト名にはカレントディレクトリ名を割当
 PROJECT =   $(notdir $(CURDIR))
@@ -20,6 +17,9 @@ SDEV = /dev/emb88
 BAUD = 38400
 
 OBJECTS = $(SRCS:.c=.o)
+ifeq (${MON},1)
+	OBJECTS += onchip_mon.o
+endif
 MPU = atmega88pa
 F_CPU = 8000000UL
 

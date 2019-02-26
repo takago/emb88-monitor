@@ -13,8 +13,8 @@ ISR(USART_RX_vect)
     static unsigned char stat = 0;
     static unsigned char rw;
     static unsigned int p; // IOレジスタのアドレス(16bit)
-    static unsigned int v16;
-
+    static unsigned int v16,pre_adc;
+    
     switch(stat){
     case 0: // 初期状態
         rw = UDR0; // 0:読み出し命令，1:書き込み命令
@@ -23,19 +23,21 @@ ISR(USART_RX_vect)
     case 1: // IOレジスタ情報の受信待ち
         p = UDR0;        // レジスタアドレス取得
         if(rw == 0){  // 読み出し処理のときは
-            if( p==0x84 || p==0x8a || p==0x88 ){ // 16ビットレジスタについては
+            if( p==0x84 || p==0x8a || p==0x88 || p==0x78 ){ // 16ビットレジスタについては
                 if( p==0x84){
                     v16=TCNT1;
                 }else if( p==0x8a ){
                     v16=OCR1B;
                 }else if ( p==0x88 ){
                     v16=OCR1A;
-                }
+                }else if ( p==0x78){
+                    v16 = ADC;
+                }                
                 UDR0 = v16; // 下位バイト送信
                 while((UCSR0A & _BV(UDRE0))==0){ // 送信器の空きを待つ
                     wdt_reset();
                 }
-                UDR0 = v16 >> 8; // 上位バイト送信
+                UDR0 = v16 >> 8; // 上位バイト送信                
             }
             else{
                 UDR0 = *((unsigned char*)p);  // IOレジスタの値を取り出して送信
