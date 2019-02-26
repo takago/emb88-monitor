@@ -32,10 +32,10 @@ col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333
 #  短くすると止まりやすい．また，VMwareでは遅くする必要がある
 vm_cmd='/usr/bin/vmware-checkvm'
 if os.path.exists(vm_cmd)==False:
-    update_interval_ms=50
+    update_interval_ms=100
 else:
     if os.system(vm_cmd)!=0:
-        update_interval_ms=50
+        update_interval_ms=100
     else:
         update_interval_ms=200
 
@@ -44,7 +44,8 @@ else:
 def setup_serial():
     global sdev
     sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
-    #time.sleep(0.1)
+    sdev.setDTR(False)
+    time.sleep(0.5)
     # buffer flush
     sdev.reset_input_buffer()
     #time.sleep(0.1)
