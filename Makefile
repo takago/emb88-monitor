@@ -6,23 +6,24 @@ CFLAGS += -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums
 CFLAGS += -fdiagnostics-color 
 LDFLAGS = -mmcu=${MPU}
 
+OBJ = onchip_mon.o
 MONI_PATH0 = /usr/local/bin
 MONI_PATH1 = /usr/local/lib/avr/lib
 
-all: onchip-monitor/onchip_mon.o
+all: ${OBJ}
 
-install: onchip-monitor/onchip_mon.o
+install: ${OBJ}
 	mkdir -p ${MONI_PATH1}
-	cp onchip-monitor/onchip_mon.o ${MONI_PATH1}
+	cp $< ${MONI_PATH1}
 	cp emb88-monitor.py ${MONI_PATH0}/emb88-monitor
 	chmod +x  ${MONI_PATH0}/emb88-monitor
 
-clean:
-	rm onchip-monitor/onchip_mon.o
+clean: ${OBJ}
+	rm -f $<
 
 uninstall:
-	rm ${MONI_PATH1}/onchip_mon.o
-	rm ${MONI_PATH0}/emb88-monitor
+	rm -f ${MONI_PATH1}/onchip_mon.o
+	rm -f ${MONI_PATH0}/emb88-monitor
 
 %.o:    %.c Makefile
 	${CC}  -c  $< -o $@ ${CFLAGS}
