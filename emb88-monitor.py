@@ -14,10 +14,22 @@ import serial
 import sys
 import time
 
-update_interval_ms=50
+serial_dev='/dev/emb88'
+serial_baud=38400
+update_interval_ms=100 # 短くすると止まりやすいので注意
 col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333333')]
 
-class EntryWindow(Gtk.Window):
+def setup_serial():
+    global sdev
+    sdev = serial.Serial( serial_dev, serial_baud, timeout=0.05, write_timeout=0.05 )
+    time.sleep(0.1)
+    # buffer flush
+    sdev.reset_input_buffer()
+    time.sleep(0.1)
+    sdev.reset_output_buffer()
+    time.sleep(0.1)
+
+class MonitorWindow(Gtk.Window):
 
     def __init__(self):
         Gtk.Window.__init__(self, title="EMB88 Monitor (TAKAGO_LAB. 2019)")
@@ -84,8 +96,9 @@ class EntryWindow(Gtk.Window):
 
         self.entry={}
         for xx in reg_names:
-#            hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-#            vbox.pack_start(hseparator, True, True, 0)
+            if len(xx)==1:
+                hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
+                vbox.pack_start(hseparator, True, True, 0)
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
             vbox.pack_start(hbox, True, True, 0)
             for x in xx:
@@ -200,15 +213,10 @@ class EntryWindow(Gtk.Window):
         sdev.flush()
         #time.sleep(0.01)
 
-win = EntryWindow()
+
+
+setup_serial()
+win = MonitorWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
-
-sdev = serial.Serial('/dev/emb88',38400, timeout=0.05)
-time.sleep(0.1)
-# buffer flush
-sdev.reset_input_buffer()
-time.sleep(0.1)
-sdev.reset_output_buffer()
-time.sleep(0.1)
 Gtk.main()
