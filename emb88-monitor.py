@@ -118,9 +118,6 @@ class MonitorWindow(Gtk.Window):
 
         self.entry={}
         for xx in reg_names:
-            if len(xx)==1:
-                hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
-                vbox.pack_start(hseparator, True, True, 0)
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
             vbox.pack_start(hbox, True, True, 0)
             for x in xx:

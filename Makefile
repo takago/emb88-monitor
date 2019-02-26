@@ -17,6 +17,7 @@ install: ${OBJ}
 	cp $< ${MONI_PATH1}
 	cp emb88-monitor.py ${MONI_PATH0}/emb88-monitor
 	chmod +x  ${MONI_PATH0}/emb88-monitor
+	cp emb88-monitor.desktop /usr/local/share/applications/
 
 clean: ${OBJ}
 	rm -f $<
@@ -24,6 +25,7 @@ clean: ${OBJ}
 uninstall:
 	rm -f ${MONI_PATH1}/onchip_mon.o
 	rm -f ${MONI_PATH0}/emb88-monitor
+	rm -f /usr/local/share/applications/emb88-monitor.desktop
 
 %.o:    %.c Makefile
 	${CC}  -c  $< -o $@ ${CFLAGS}

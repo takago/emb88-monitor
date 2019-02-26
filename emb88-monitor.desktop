@@ -1,0 +1,11 @@
+[Desktop Entry]
+Version=1.0
+Type=Application
+Name=EMB88-Monitor
+Exec=/usr/local/bin/emb88-monitor
+Terminal=false
+Comment=EMB88-Monitor
+Categories=GTK;Development;
+Icon=edit-find.png
+
+
