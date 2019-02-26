@@ -7,6 +7,11 @@
 # 16bitレジスタの書き込みは，上位1，下位0の順
 # 16bitレジスタの読み出しは，下位0・上位1の順に読み出すことが決まっている
 
+#
+# VMwareでは時間調整しないと怪しいかも
+# Entryの背景色が塗られない場合はデスクトップのテーマを変えればOK
+
+
 import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Gdk, Pango, GObject
@@ -15,21 +20,22 @@ import binascii
 import serial
 import sys
 import time
+import signal
 
 serial_dev='/dev/emb88'
 serial_baud=38400
-update_interval_ms=100 # 短くすると止まりやすいので注意
+update_interval_ms=200 # 短くすると止まりやすいので注意（特にVMwareでは遅くする必要あり）
 col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333333')]
 
 def setup_serial():
     global sdev
-    sdev = serial.Serial( serial_dev, serial_baud, timeout=0.05, write_timeout=0.05 )
-    time.sleep(0.1)
+    sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
+    #time.sleep(0.1)
     # buffer flush
     sdev.reset_input_buffer()
-    time.sleep(0.1)
+    #time.sleep(0.1)
     sdev.reset_output_buffer()
-    time.sleep(0.1)
+    #time.sleep(0.1)
 
 class MonitorWindow(Gtk.Window):
 
@@ -112,7 +118,7 @@ class MonitorWindow(Gtk.Window):
                 if len(x)==1:
                     continue
                 reg_adr=x['adr']
-                wr=x['wr'] 
+                wr=x['wr']
                 N=len(reg_adr)
                 self.entry[reg_name]=Gtk.Entry()
                 self.entry[reg_name].name=reg_name # オブジェクトに値を持たせる
@@ -125,10 +131,10 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].set_width_chars(2*N)
                 self.entry[reg_name].modify_font(Pango.FontDescription('Inconsolata 24'))
                 if wr==True:
-                    self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[0])
+                    self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[0])
                 else:
-                    self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[2])
-                self.entry[reg_name].modify_fg(Gtk.StateType.NORMAL, col[1])
+                    self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[2])
+                self.entry[reg_name].modify_fg(Gtk.StateFlags.NORMAL, col[1])
                 self.entry[reg_name].connect("key-release-event", self.on_key_release)
                 self.entry[reg_name].connect("button-release-event", self.on_button_release)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
@@ -164,28 +170,28 @@ class MonitorWindow(Gtk.Window):
         # [ESC]で入力モードを抜ける
         if ev.keyval == Gdk.KEY_Escape:
             widget.auto_update=True
-            widget.modify_bg(Gtk.StateType.NORMAL, col[0])
-            widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+            widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
+            widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
 
         # [ENTER]で書き込みモードのON/OFF
         if ev.keyval == Gdk.KEY_Return:
             if widget.auto_update==False:
                 widget.auto_update=True
-                widget.modify_bg(Gtk.StateType.NORMAL, col[0])
-                widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+                widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
+                widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
                 val = int( widget.get_text(), 16)
                 self.write_reg( widget.adr, val, widget.N )
             else:
                 widget.auto_update=False
-                widget.modify_fg(Gtk.StateType.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateType.NORMAL, col[1])
+                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
+                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
 
         # [DEL]や[BS]で消去
         if ev.keyval == Gdk.KEY_Delete or ev.keyval == Gdk.KEY_BackSpace:
             if widget.auto_update==True:
                 widget.auto_update=False
-                widget.modify_fg(Gtk.StateType.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateType.NORMAL, col[1])
+                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
+                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
                 widget.set_text('')
 
     def on_button_release(self, widget, ev, data=None):
@@ -193,12 +199,12 @@ class MonitorWindow(Gtk.Window):
                 return
             if widget.auto_update==False:
                 widget.auto_update=True
-                widget.modify_bg(Gtk.StateType.NORMAL, col[0])
-                widget.modify_fg(Gtk.StateType.NORMAL, col[1])
+                widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
+                widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
             else:
                 widget.auto_update=False
-                widget.modify_fg(Gtk.StateType.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateType.NORMAL, col[1])
+                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
+                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
 
     def read_reg(self, adr, N):
         sdev.write(b'\x00')
@@ -227,4 +233,5 @@ setup_serial()
 win = MonitorWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
+GLib.unix_signal_add(GLib.PRIORITY_DEFAULT, signal.SIGINT, Gtk.main_quit) # 端末からのC-cで終了出来るようにする
 Gtk.main()
