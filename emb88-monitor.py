@@ -15,7 +15,7 @@ import sys
 import time
 
 update_interval_ms=50
-col=[Gdk.Color(0, 0x7a*256,0xbb *256), Gdk.Color(60000, 60000, 60000)]
+col=[Gdk.Color(0, 0x7a*256,0xbb *256), Gdk.Color(60000, 60000, 60000), Gdk.Color(20000, 20000, 20000)]
 
 class EntryWindow(Gtk.Window):
 
@@ -26,58 +26,58 @@ class EntryWindow(Gtk.Window):
 
         reg_names=[
             [{'name':'\n(1) GPIO'}],
-            [{'name':'DDRB','adr':[0x24]},
-             {'name':'DDRC','adr':[0x27]},
-             {'name':'DDRD','adr':[0x2a]},
+            [{'name':'DDRD','adr':[0x2a],'wr':True},
+            {'name':'DDRC','adr':[0x27],'wr':True},
+            {'name':'DDRB','adr':[0x24],'wr':True},
             ],
-            [{'name':'PORTB','adr':[0x25]},
-             {'name':'PORTC','adr':[0x28]},
-             {'name':'PORTD','adr':[0x2b]}
+            [{'name':'PORTD','adr':[0x2b],'wr':True},
+             {'name':'PORTC','adr':[0x28],'wr':True},
+             {'name':'PORTB','adr':[0x25],'wr':True},
             ],
-            [{'name':'PINB','adr':[0x23]},
-             {'name':'PINC','adr':[0x26]},
-             {'name':'PIND','adr':[0x29]}
+            [{'name':'PIND','adr':[0x29],'wr':False},
+             {'name':'PINC','adr':[0x26],'wr':False},
+             {'name':'PINB','adr':[0x23],'wr':False},
             ],
             [{'name':'\n(2) Pin change interrupt'}],
-            [{'name':'PCMSK0','adr':[0x6b]},
-             {'name':'PCMSK1','adr':[0x6c]},
-             {'name':'PCMSK2','adr':[0x6d]},
-             {'name':'PCICR','adr':[0x68]},
-             {'name':'PCIFR','adr':[0x3b]},
+            [{'name':'PCMSK2','adr':[0x6d],'wr':True},
+             {'name':'PCMSK1','adr':[0x6c],'wr':True},
+             {'name':'PCMSK0','adr':[0x6b],'wr':True},
+             {'name':'PCICR','adr':[0x68],'wr':True},
+             {'name':'PCIFR','adr':[0x3b],'wr':True},
             ],
             [{'name':'\n(3) 8bit timers'}],
-            [{'name':'TCNT0','adr':[0x46]},
-             {'name':'OCR0B','adr':[0x48]},
-             {'name':'OCR0A','adr':[0x47]},
-             {'name':'TCCR0B','adr':[0x45]},
-             {'name':'TCCR0A','adr':[0x44]},
-             {'name':'TIFR0','adr':[0x35]},
-             {'name':'TIMSK0','adr':[0x6e]},
+            [{'name':'TCNT0','adr':[0x46],'wr':True},
+             {'name':'OCR0B','adr':[0x48],'wr':True},
+             {'name':'OCR0A','adr':[0x47],'wr':True},
+             {'name':'TCCR0B','adr':[0x45],'wr':True},
+             {'name':'TCCR0A','adr':[0x44],'wr':True},
+             {'name':'TIFR0','adr':[0x35],'wr':True},
+             {'name':'TIMSK0','adr':[0x6e],'wr':True},
             ],
-            [{'name':'TCNT2','adr':[0xb2]},
-             {'name':'OCR2B','adr':[0xb4]},
-             {'name':'OCR2A','adr':[0xb3]},
-             {'name':'TCCR2B','adr':[0xb1]},
-             {'name':'TCCR2A','adr':[0xb0]},
-             {'name':'TIFR2','adr':[0x37]},
-             {'name':'TIMSK2','adr':[0x70]},
+            [{'name':'TCNT2','adr':[0xb2],'wr':True},
+             {'name':'OCR2B','adr':[0xb4],'wr':True},
+             {'name':'OCR2A','adr':[0xb3],'wr':True},
+             {'name':'TCCR2B','adr':[0xb1],'wr':True},
+             {'name':'TCCR2A','adr':[0xb0],'wr':True},
+             {'name':'TIFR2','adr':[0x37],'wr':True},
+             {'name':'TIMSK2','adr':[0x70],'wr':True},
             ],
             [{'name':'\n(4) 16bit timer'}],
-            [{'name':'TCNT1','adr':[0x84,0x85]}, # TCNT1H:0x85, TCNT1L:0x84
-             {'name':'OCR1B','adr':[0x8a,0x8b]}, # OCR1BH:0x8B, OCR1BL:0x8A
-             {'name':'OCR1A','adr':[0x88,0x89]}, # OCR1AH:0x89, OCR1AL:0x88
-             {'name':'TCCR1C','adr':[0x82]},
-             {'name':'TCCR1B','adr':[0x81]},
-             {'name':'TCCR1A','adr':[0x80]},
-             {'name':'TIFR1','adr':[0x36]},
-             {'name':'TIMSK1','adr':[0x6f]},
+            [{'name':'TCNT1','adr':[0x84,0x85],'wr':True}, # TCNT1H:0x85, TCNT1L:0x84
+             {'name':'OCR1B','adr':[0x8a,0x8b],'wr':True}, # OCR1BH:0x8B, OCR1BL:0x8A
+             {'name':'OCR1A','adr':[0x88,0x89],'wr':True}, # OCR1AH:0x89, OCR1AL:0x88
+             {'name':'TCCR1C','adr':[0x82],'wr':True},
+             {'name':'TCCR1B','adr':[0x81],'wr':True},
+             {'name':'TCCR1A','adr':[0x80],'wr':True},
+             {'name':'TIFR1','adr':[0x36],'wr':True},
+             {'name':'TIMSK1','adr':[0x6f],'wr':True},
             ],
             [{'name':'\n(5) ADC'}],
-            [{'name':'ADC','adr':[0x78,0x79]}, # ADCH:0x79, ADCL:0x78
-             {'name':'DIDR0','adr':[0x7e]},
-             {'name':'ADMUX','adr':[0x7c]},
-             {'name':'ADCSRB','adr':[0x7b]},
-             {'name':'ADCSRA','adr':[0x7c]},
+            [{'name':'ADC','adr':[0x78,0x79],'wr':False}, # ADCH:0x79, ADCL:0x78
+             {'name':'DIDR0','adr':[0x7e],'wr':True},
+             {'name':'ADMUX','adr':[0x7c],'wr':True},
+             {'name':'ADCSRB','adr':[0x7b],'wr':True},
+             {'name':'ADCSRA','adr':[0x7c],'wr':True},
             ],
             [{'name':''}],
             ]
@@ -98,17 +98,22 @@ class EntryWindow(Gtk.Window):
                 if len(x)==1:
                     continue
                 reg_adr=x['adr']
+                wr=x['wr'] 
                 N=len(reg_adr)
                 self.entry[reg_name]=Gtk.Entry()
                 self.entry[reg_name].name=reg_name # オブジェクトに値を持たせる
                 self.entry[reg_name].adr=reg_adr[0] # オブジェクトに値を持たせる
                 self.entry[reg_name].N=N # オブジェクトに値を持たせる
-                self.entry[reg_name].editable=False
+                self.entry[reg_name].set_editable(wr)
+                self.entry[reg_name].auto_update=True
                 self.entry[reg_name].set_text('UU'*N)
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
                 self.entry[reg_name].modify_font(Pango.FontDescription('Inconsolata 24'))
-                self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[0])
+                if wr==True:
+                    self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[0])
+                else:
+                    self.entry[reg_name].modify_bg(Gtk.StateType.NORMAL, col[2])
                 self.entry[reg_name].modify_fg(Gtk.StateType.NORMAL, col[1])
                 self.entry[reg_name].connect("key-release-event", self.on_key_release)
                 self.entry[reg_name].connect("button-release-event", self.on_button_release)
@@ -118,7 +123,7 @@ class EntryWindow(Gtk.Window):
     def mytimer(self):
         GObject.timeout_add(update_interval_ms, self.mytimer)
         for k,widget in self.entry.items():
-            if widget.editable==True:
+            if widget.auto_update==False:
                 continue
             val=self.read_reg( widget.adr, widget.N)
             if widget.N==2:
@@ -132,40 +137,45 @@ class EntryWindow(Gtk.Window):
         #print(widget.adr)
         #print(widget.get_text())
 
+        if widget.get_editable()==False:
+            return
+
         # [ESC]で入力モードを抜ける
         if ev.keyval == Gdk.KEY_Escape:
-            widget.editable=False
+            widget.auto_update=True
             widget.modify_bg(Gtk.StateType.NORMAL, col[0])
             widget.modify_fg(Gtk.StateType.NORMAL, col[1])
 
         # [ENTER]で書き込みモードのON/OFF
         if ev.keyval == Gdk.KEY_Return:
-            if widget.editable==True:
-                widget.editable=False
+            if widget.auto_update==False:
+                widget.auto_update=True
                 widget.modify_bg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_fg(Gtk.StateType.NORMAL, col[1])
                 val = int( widget.get_text(), 16)
                 self.write_reg( widget.adr, val, widget.N )
             else:
-                widget.editable=True
+                widget.auto_update=False
                 widget.modify_fg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_bg(Gtk.StateType.NORMAL, col[1])
 
         # [DEL]や[BS]で消去
         if ev.keyval == Gdk.KEY_Delete or ev.keyval == Gdk.KEY_BackSpace:
-            if widget.editable==False:
-                widget.editable=True
+            if widget.auto_update==True:
+                widget.auto_update=False
                 widget.modify_fg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_bg(Gtk.StateType.NORMAL, col[1])
                 widget.set_text('')
 
     def on_button_release(self, widget, ev, data=None):
-            if widget.editable==True:
-                widget.editable=False
+            if widget.get_editable()==False:
+                return
+            if widget.auto_update==False:
+                widget.auto_update=True
                 widget.modify_bg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_fg(Gtk.StateType.NORMAL, col[1])
             else:
-                widget.editable=True
+                widget.auto_update=False
                 widget.modify_fg(Gtk.StateType.NORMAL, col[0])
                 widget.modify_bg(Gtk.StateType.NORMAL, col[1])
 
