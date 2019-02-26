@@ -15,7 +15,7 @@ import sys
 import time
 
 update_interval_ms=50
-col=[Gdk.Color(0, 0x7a*256,0xbb *256), Gdk.Color(60000, 60000, 60000), Gdk.Color(20000, 20000, 20000)]
+col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333333')]
 
 class EntryWindow(Gtk.Window):
 
@@ -26,22 +26,22 @@ class EntryWindow(Gtk.Window):
 
         reg_names=[
             [{'name':'\n(1) GPIO'}],
-            [{'name':'DDRD','adr':[0x2a],'wr':True},
+            [{'name':'DDRB','adr':[0x24],'wr':True},
             {'name':'DDRC','adr':[0x27],'wr':True},
-            {'name':'DDRB','adr':[0x24],'wr':True},
+            {'name':'DDRD','adr':[0x2a],'wr':True},
             ],
-            [{'name':'PORTD','adr':[0x2b],'wr':True},
+            [{'name':'PORTB','adr':[0x25],'wr':True},
              {'name':'PORTC','adr':[0x28],'wr':True},
-             {'name':'PORTB','adr':[0x25],'wr':True},
+             {'name':'PORTD','adr':[0x2b],'wr':True},
             ],
-            [{'name':'PIND','adr':[0x29],'wr':False},
+            [{'name':'PINB','adr':[0x23],'wr':False},
              {'name':'PINC','adr':[0x26],'wr':False},
-             {'name':'PINB','adr':[0x23],'wr':False},
+             {'name':'PIND','adr':[0x29],'wr':False},
             ],
             [{'name':'\n(2) Pin change interrupt'}],
-            [{'name':'PCMSK2','adr':[0x6d],'wr':True},
+            [{'name':'PCMSK0','adr':[0x6b],'wr':True},
              {'name':'PCMSK1','adr':[0x6c],'wr':True},
-             {'name':'PCMSK0','adr':[0x6b],'wr':True},
+             {'name':'PCMSK2','adr':[0x6d],'wr':True},
              {'name':'PCICR','adr':[0x68],'wr':True},
              {'name':'PCIFR','adr':[0x3b],'wr':True},
             ],
@@ -208,6 +208,7 @@ sdev = serial.Serial('/dev/emb88',38400, timeout=0.05)
 time.sleep(0.1)
 # buffer flush
 sdev.reset_input_buffer()
+time.sleep(0.1)
 sdev.reset_output_buffer()
 time.sleep(0.1)
 Gtk.main()
