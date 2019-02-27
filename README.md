@@ -4,4 +4,4 @@
 
 ![専門実験の学生用に開発中](https://github.com/takago/emb88-monitor/blob/master/screenshot.png)
 
-https://youtu.be/CtyITqBDpnk
+https://www.youtube.com/watch?v=bxoKRb4myW8
