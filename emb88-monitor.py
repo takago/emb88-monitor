@@ -31,20 +31,15 @@ col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333
 # レジスタ値の更新間隔(update_interval_ms)の設定
 #  短くすると止まりやすい．また，VMwareでは遅くする必要がある
 vm_cmd='/usr/bin/vmware-checkvm'
-if os.path.exists(vm_cmd)==False:
-    update_interval_ms=100
-else:
-    if os.system(vm_cmd)!=0:
-        update_interval_ms=100
-    else:
+update_interval_ms=100
+if os.path.exists(vm_cmd):
+    if os.system(vm_cmd)==0:
         update_interval_ms=200
-
-
 
 def setup_serial():
     global sdev
     sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
-    sdev.setDTR(False)
+    sdev.setDTR(False)  # これをしておかないとマイコンがスタートしないことがある
     time.sleep(0.5)
     # buffer flush
     sdev.reset_input_buffer()
@@ -219,26 +214,38 @@ class MonitorWindow(Gtk.Window):
                 widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
 
     def read_reg(self, adr, N):
-        sdev.write(b'\x00')
-        sdev.flush()
-        #time.sleep(0.01)
-        sdev.write(adr.to_bytes(1,'big'))
-        sdev.flush()
-        #time.sleep(0.01)
-        c = int.from_bytes(sdev.read(N),'little')
-        return c
+        try:
+            sdev.write(b'\x00')
+            sdev.flush()
+            #time.sleep(0.01)
+            sdev.write(adr.to_bytes(1,'big'))
+            sdev.flush()
+            #time.sleep(0.01)
+            v = sdev.read(N)
+            c = int.from_bytes( v, 'little')
+            return c
+        except:
+            # タイムアウトなどが起きたときは
+            sdev.reset_input_buffer()
+            sdev.reset_output_buffer()
+            return 0
+
 
     def write_reg(self, adr, val, N):
-        sdev.write(b'\x01')
-        sdev.flush()
-        #time.sleep(0.01)
-        sdev.write(adr.to_bytes(1,'big'))
-        sdev.flush()
-        #time.sleep(0.01)
-        sdev.write(val.to_bytes(N,'big'))
-        sdev.flush()
-        #time.sleep(0.01)
-
+        try:
+            sdev.write(b'\x01')
+            sdev.flush()
+            #time.sleep(0.01)
+            sdev.write(adr.to_bytes(1,'big'))
+            sdev.flush()
+            #time.sleep(0.01)
+            sdev.write(val.to_bytes(N,'big'))
+            sdev.flush()
+            #time.sleep(0.01)
+        except:
+            # タイムアウトなどが起きたときは
+            sdev.reset_input_buffer()
+            sdev.reset_output_buffer()
 
 
 setup_serial()
