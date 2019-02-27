@@ -26,7 +26,6 @@ serial_dev='/dev/emb88'
 serial_baud=38400
 
 fnt='Inconsolata 18'
-col=[Gdk.color_parse('#2E6E88'),Gdk.color_parse('#DDDDDD'),Gdk.color_parse('#333333')]
 
 # レジスタ値の更新間隔(update_interval_ms)の設定
 #  短くすると止まりやすい．また，VMwareでは遅くする必要がある
@@ -139,13 +138,8 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
                 self.entry[reg_name].modify_font(Pango.FontDescription(fnt))
-                if wr==True:
-                    self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[0])
-                else:
-                    self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[2])
-                self.entry[reg_name].modify_fg(Gtk.StateFlags.NORMAL, col[1])
-                self.entry[reg_name].connect("key-press-event", self.on_key_release)
-                self.entry[reg_name].connect("button-press-event", self.on_button_release)
+                self.entry[reg_name].connect("key-press-event", self.on_key_press)
+                self.entry[reg_name].connect("button-press-event", self.on_button_press)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
 
         hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
@@ -165,6 +159,8 @@ class MonitorWindow(Gtk.Window):
         GObject.timeout_add(update_interval_ms, self.mytimer)
         for k,widget in self.entry.items():
             if widget.auto_update==False:
+                widget.modify_fg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#FFF'))
+                widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#00F'))
                 continue
             val=self.read_reg( widget.adr, widget.N)
             if widget.radix==16:
@@ -182,9 +178,21 @@ class MonitorWindow(Gtk.Window):
                     dat='%5d' % val
                 else:
                     dat='%3d' % val
+
+            widget.modify_fg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#000'))
+            if widget.get_editable()==False:
+                if dat!=widget.get_text():
+                    widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#F68'))
+                else:
+                    widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#999'))
+            else:
+                if dat!=widget.get_text():
+                    widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#9CD'))
+                else:
+                    widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#DDD'))
             widget.set_text(dat)
 
-    def on_key_release(self, widget, ev, data=None):
+    def on_key_press(self, widget, ev, data=None):
         #print(ev.keyval)
         #print(widget.name)
         #print(widget.adr)
@@ -196,15 +204,11 @@ class MonitorWindow(Gtk.Window):
         # [ESC]で入力モードを抜ける
         if ev.keyval == Gdk.KEY_Escape:
             widget.auto_update=True
-            widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
-            widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
 
         # [ENTER]で書き込みモードのON/OFF
         if ev.keyval == Gdk.KEY_Return:
             if widget.auto_update==False:
                 widget.auto_update=True
-                widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
-                widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
                 if widget.radix==16:
                     val = int( widget.get_text(), 16)
                 elif widget.radix==2:
@@ -214,21 +218,18 @@ class MonitorWindow(Gtk.Window):
                 self.write_reg( widget.adr, val, widget.N )
             else:
                 widget.auto_update=False
-                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
 
         # [DEL]や[BS]で消去
         if ev.keyval == Gdk.KEY_Delete or ev.keyval == Gdk.KEY_BackSpace:
             if widget.auto_update==True:
                 widget.auto_update=False
-                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
                 widget.set_text('')
 
-
-
-    def on_button_release(self, widget, ev, data=None):
+    def on_button_press(self, widget, ev, data=None):
             # print(ev.button)
+            if ev.button==1:
+                widget.auto_update = not widget.auto_update
+                return
             if ev.button==2:
                 if widget.radix==2:
                     widget.radix=16
@@ -243,17 +244,8 @@ class MonitorWindow(Gtk.Window):
                     widget.set_max_length(widget.N*8)
                     widget.set_width_chars(widget.N*8)
                 return
-
             if widget.get_editable()==False:
                 return
-            if widget.auto_update==False:
-                widget.auto_update=True
-                widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
-                widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
-            else:
-                widget.auto_update=False
-                widget.modify_fg(Gtk.StateFlags.NORMAL, col[0])
-                widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
 
     def read_reg(self, adr, N):
         try:
