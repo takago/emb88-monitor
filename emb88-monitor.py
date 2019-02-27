@@ -56,22 +56,22 @@ class MonitorWindow(Gtk.Window):
 
         reg_names=[
             [{'name':'\n(1) GPIO'}],
-            [{'name':'DDRB','adr':[0x24],'wr':True},
+            [{'name':'DDRD','adr':[0x2a],'wr':True},
             {'name':'DDRC','adr':[0x27],'wr':True},
-            {'name':'DDRD','adr':[0x2a],'wr':True},
+            {'name':'DDRB','adr':[0x24],'wr':True},
             ],
-            [{'name':'PORTB','adr':[0x25],'wr':True},
+            [{'name':'PORTD','adr':[0x2b],'wr':True},
              {'name':'PORTC','adr':[0x28],'wr':True},
-             {'name':'PORTD','adr':[0x2b],'wr':True},
+             {'name':'PORTB','adr':[0x25],'wr':True},
             ],
-            [{'name':'PINB','adr':[0x23],'wr':False},
+            [{'name':'PIND','adr':[0x29],'wr':False},
              {'name':'PINC','adr':[0x26],'wr':False},
-             {'name':'PIND','adr':[0x29],'wr':False},
+             {'name':'PINB','adr':[0x23],'wr':False},
             ],
             [{'name':'\n(2) Pin change interrupt'}],
-            [{'name':'PCMSK0','adr':[0x6b],'wr':True},
+            [{'name':'PCMSK2','adr':[0x6d],'wr':True},
              {'name':'PCMSK1','adr':[0x6c],'wr':True},
-             {'name':'PCMSK2','adr':[0x6d],'wr':True},
+             {'name':'PCMSK0','adr':[0x6b],'wr':True},
              {'name':'PCICR','adr':[0x68],'wr':True},
              {'name':'PCIFR','adr':[0x3b],'wr':True},
             ],
@@ -81,16 +81,16 @@ class MonitorWindow(Gtk.Window):
              {'name':'OCR0B','adr':[0x48],'wr':True},
              {'name':'TCCR0A','adr':[0x44],'wr':True},
              {'name':'TCCR0B','adr':[0x45],'wr':True},
-             {'name':'TIFR0','adr':[0x35],'wr':True},
              {'name':'TIMSK0','adr':[0x6e],'wr':True},
+             {'name':'TIFR0','adr':[0x35],'wr':True},
             ],
             [{'name':'TCNT2','adr':[0xb2],'wr':True},
              {'name':'OCR2A','adr':[0xb3],'wr':True},
              {'name':'OCR2B','adr':[0xb4],'wr':True},
              {'name':'TCCR2A','adr':[0xb0],'wr':True},
              {'name':'TCCR2B','adr':[0xb1],'wr':True},
-             {'name':'TIFR2','adr':[0x37],'wr':True},
              {'name':'TIMSK2','adr':[0x70],'wr':True},
+             {'name':'TIFR2','adr':[0x37],'wr':True},
             ],
             [{'name':'\n(4) 16bit timer'}],
             [{'name':'TCNT1','adr':[0x84,0x85],'wr':True}, # TCNT1H:0x85, TCNT1L:0x84
@@ -99,8 +99,8 @@ class MonitorWindow(Gtk.Window):
              {'name':'TCCR1A','adr':[0x80],'wr':True},
              {'name':'TCCR1B','adr':[0x81],'wr':True},
              #{'name':'TCCR1C','adr':[0x82],'wr':True},
-             {'name':'TIFR1','adr':[0x36],'wr':True},
              {'name':'TIMSK1','adr':[0x6f],'wr':True},
+             {'name':'TIFR1','adr':[0x36],'wr':True},
             ],
             [{'name':'\n(5) ADC'}],
             [{'name':'ADC','adr':[0x78,0x79],'wr':False}, # ADCH:0x79, ADCL:0x78
@@ -115,6 +115,7 @@ class MonitorWindow(Gtk.Window):
         for xx in reg_names:
             hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
             vbox.pack_start(hbox, True, True, 0)
+
             for x in xx:
                 reg_name=x['name']
                 lbl = Gtk.Label(reg_name)
@@ -133,6 +134,7 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].N=N # オブジェクトに値を持たせる
                 self.entry[reg_name].set_editable(wr)
                 self.entry[reg_name].auto_update=True
+                self.entry[reg_name].radix=16 # 基数:2,8,16
                 self.entry[reg_name].set_text('UU'*N)
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
@@ -142,11 +144,16 @@ class MonitorWindow(Gtk.Window):
                 else:
                     self.entry[reg_name].modify_bg(Gtk.StateFlags.NORMAL, col[2])
                 self.entry[reg_name].modify_fg(Gtk.StateFlags.NORMAL, col[1])
-                self.entry[reg_name].connect("key-release-event", self.on_key_release)
-                self.entry[reg_name].connect("button-release-event", self.on_button_release)
+                self.entry[reg_name].connect("key-press-event", self.on_key_release)
+                self.entry[reg_name].connect("button-press-event", self.on_button_release)
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
+
         hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
         vbox.pack_start(hseparator, True, True, 0)
+
+        hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
+        vbox.pack_start(hbox, True, True, 0)
+
         lbl = Gtk.Label('DEV:'+serial_dev+' BAUD:'+str(serial_baud)+' [Takago Lab.2019]')
         lbl.modify_font(Pango.FontDescription(fnt))
         lbl.set_xalign(1) # 右寄りでラベル表示
@@ -160,10 +167,22 @@ class MonitorWindow(Gtk.Window):
             if widget.auto_update==False:
                 continue
             val=self.read_reg( widget.adr, widget.N)
-            if widget.N==2:
-                widget.set_text('%04X' % val)
+            if widget.radix==16:
+                if widget.N==2:
+                    dat='%04X' % val
+                else:
+                    dat='%02X' % val
+            elif widget.radix==2:
+                if widget.N==2:
+                    dat=format(val,'016b')
+                else:
+                    dat=format(val,'08b')
             else:
-                widget.set_text('%02X' % val)
+                if widget.N==2:
+                    dat='%5d' % val
+                else:
+                    dat='%3d' % val
+            widget.set_text(dat)
 
     def on_key_release(self, widget, ev, data=None):
         #print(ev.keyval)
@@ -186,7 +205,12 @@ class MonitorWindow(Gtk.Window):
                 widget.auto_update=True
                 widget.modify_bg(Gtk.StateFlags.NORMAL, col[0])
                 widget.modify_fg(Gtk.StateFlags.NORMAL, col[1])
-                val = int( widget.get_text(), 16)
+                if widget.radix==16:
+                    val = int( widget.get_text(), 16)
+                elif widget.radix==2:
+                    val = int( widget.get_text(), 2)
+                else:
+                    val = int( widget.get_text(), 10)
                 self.write_reg( widget.adr, val, widget.N )
             else:
                 widget.auto_update=False
@@ -201,7 +225,25 @@ class MonitorWindow(Gtk.Window):
                 widget.modify_bg(Gtk.StateFlags.NORMAL, col[1])
                 widget.set_text('')
 
+
+
     def on_button_release(self, widget, ev, data=None):
+            # print(ev.button)
+            if ev.button==2:
+                if widget.radix==2:
+                    widget.radix=16
+                    widget.set_max_length(widget.N*2)
+                    widget.set_width_chars(widget.N*2)
+                elif widget.radix==16:
+                    widget.radix=10
+                    widget.set_max_length(widget.N*2+1)
+                    widget.set_width_chars(widget.N*2+1)
+                else:
+                    widget.radix=2
+                    widget.set_max_length(widget.N*8)
+                    widget.set_width_chars(widget.N*8)
+                return
+
             if widget.get_editable()==False:
                 return
             if widget.auto_update==False:
