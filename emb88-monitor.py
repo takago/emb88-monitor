@@ -7,10 +7,7 @@
 # 16bitレジスタの書き込みは，上位1，下位0の順
 # 16bitレジスタの読み出しは，下位0・上位1の順に読み出すことが決まっている
 
-#
-# VMwareでは時間調整しないと怪しいかも
 # Entryの背景色が塗られない場合はデスクトップのテーマを変えればOK
-
 
 import gi
 gi.require_version('Gtk', '3.0')
@@ -26,14 +23,6 @@ serial_dev='/dev/emb88'
 serial_baud=38400
 
 fnt='Inconsolata 18'
-
-# レジスタ値の更新間隔(update_interval_ms)の設定
-#  短くすると止まりやすい．また，VMwareでは遅くする必要がある
-vm_cmd='/usr/bin/vmware-checkvm'
-update_interval_ms=100
-if os.path.exists(vm_cmd):
-    if os.system(vm_cmd)==0:
-        update_interval_ms=200
 
 def setup_serial():
     global sdev
@@ -148,15 +137,21 @@ class MonitorWindow(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         vbox.pack_start(hbox, True, True, 0)
 
-        lbl = Gtk.Label('DEV:'+serial_dev+' BAUD:'+str(serial_baud)+' [Takago Lab.2019]')
-        lbl.modify_font(Pango.FontDescription(fnt))
-        lbl.set_xalign(1) # 右寄りでラベル表示
-        vbox.pack_start(lbl, False, False, 0)
+        self.lbl = Gtk.Label('')
+        self.lbl.modify_font(Pango.FontDescription(fnt))
+        self.lbl.set_xalign(1) # 右寄りでラベル表示
+        vbox.pack_start(self.lbl, False, False, 0)
         # タイマースタート
         GObject.timeout_add(1000, self.mytimer)
+        self.t0=time.time()
 
     def mytimer(self):
-        GObject.timeout_add(update_interval_ms, self.mytimer)
+        t1=time.time()
+        t_diff=t1-self.t0
+        self.t0=t1
+        lbl_txt = 'UPDATE[ms]:%-4d' % (t_diff*1000)
+        self.lbl.set_text(lbl_txt+' DEV:'+serial_dev+' BAUD:'+str(serial_baud)+' [Takago Lab.2019]')
+
         for k,widget in self.entry.items():
             if widget.auto_update==False:
                 widget.modify_fg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#FFF'))
@@ -191,6 +186,7 @@ class MonitorWindow(Gtk.Window):
                 else:
                     widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#DDD'))
             widget.set_text(dat)
+        GObject.timeout_add(10, self.mytimer) # 10ms後に呼び出す
 
     def on_key_press(self, widget, ev, data=None):
         #print(ev.keyval)
@@ -255,9 +251,7 @@ class MonitorWindow(Gtk.Window):
             sdev.write(adr.to_bytes(1,'big'))
             sdev.flush()
             #time.sleep(0.01)
-            v = sdev.read(N)
-            c = int.from_bytes( v, 'little')
-            return c
+            return int.from_bytes( sdev.read(N), 'little')
         except:
             # タイムアウトなどが起きたときは
             sdev.reset_input_buffer()
@@ -280,7 +274,6 @@ class MonitorWindow(Gtk.Window):
             # タイムアウトなどが起きたときは
             sdev.reset_input_buffer()
             sdev.reset_output_buffer()
-
 
 setup_serial()
 win = MonitorWindow()
