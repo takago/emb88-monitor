@@ -1,6 +1,6 @@
 # emb88-monitor
 
-各レジスタ値がGUIで表示されており，キーボードで直接値を書き換えることも出来ます．また，マウスの真ん中ボタンクリックで基数(10進,16進,2進)を変更できます．Linux Mint19で動作確認しています．
+AVRマイコンボード（Recursion EMB88, http://www.recursion.jp/book/emb88/index.php ) 用に作成したレジスタモニタ．GUIで各レジスタ値が表示されており，キーボードで書き換えることも出来ます．また，マウスの真ん中ボタンクリックで基数(10進,16進,2進)を変更できます．Linux Mint19で動作確認しています．
 
 動作の様子 https://www.youtube.com/watch?v=bxoKRb4myW8
 
