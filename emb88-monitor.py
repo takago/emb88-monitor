@@ -22,7 +22,7 @@ import os
 serial_dev='/dev/emb88'
 serial_baud=38400
 
-fnt='Inconsolata 18'
+fnt='Inconsolata 40'
 
 def setup_serial():
     global sdev

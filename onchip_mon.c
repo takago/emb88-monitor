@@ -81,3 +81,11 @@ __attribute__((constructor)) void _onchiop_mon()
 
     sei();	// 割り込み受付開始
 }
+
+__attribute__((weak)) int main()
+{
+    for(;;){
+        wdt_reset();        
+    }
+    return 0;    
+}
