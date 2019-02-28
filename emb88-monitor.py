@@ -13,16 +13,14 @@ import gi
 gi.require_version('Gtk', '3.0')
 from gi.repository import Gtk, GLib, Gdk, Pango, GObject
 
-import binascii
 import serial
-import sys
 import time
 import signal
-import os
+
 serial_dev='/dev/emb88'
 serial_baud=38400
 
-fnt='Inconsolata 40'
+fnt='Inconsolata 18'
 
 def setup_serial():
     global sdev
@@ -31,9 +29,7 @@ def setup_serial():
     time.sleep(0.5)
     # buffer flush
     sdev.reset_input_buffer()
-    #time.sleep(0.1)
     sdev.reset_output_buffer()
-    #time.sleep(0.1)
 
 class MonitorWindow(Gtk.Window):
 
@@ -247,10 +243,8 @@ class MonitorWindow(Gtk.Window):
         try:
             sdev.write(b'\x00')
             sdev.flush()
-            #time.sleep(0.01)
             sdev.write(adr.to_bytes(1,'big'))
             sdev.flush()
-            #time.sleep(0.01)
             return int.from_bytes( sdev.read(N), 'little')
         except:
             # タイムアウトなどが起きたときは
@@ -263,13 +257,10 @@ class MonitorWindow(Gtk.Window):
         try:
             sdev.write(b'\x01')
             sdev.flush()
-            #time.sleep(0.01)
             sdev.write(adr.to_bytes(1,'big'))
             sdev.flush()
-            #time.sleep(0.01)
             sdev.write(val.to_bytes(N,'big'))
             sdev.flush()
-            #time.sleep(0.01)
         except:
             # タイムアウトなどが起きたときは
             sdev.reset_input_buffer()
