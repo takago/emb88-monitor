@@ -1,7 +1,7 @@
 [Desktop Entry]
 Version=1.0
 Type=Application
-Name=EMB88-Monitor
+Name=EMB88 Monitor
 Exec=/usr/local/bin/e8mon
 Terminal=false
 Comment=EMB-88 Monitor
