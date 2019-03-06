@@ -15,17 +15,17 @@ all: ${OBJ}
 install: ${OBJ}
 	mkdir -p ${MONI_PATH1}
 	cp $< ${MONI_PATH1}
-	cp emb88-monitor.py ${MONI_PATH0}/emb88-monitor
-	chmod +x  ${MONI_PATH0}/emb88-monitor
-	cp emb88-monitor.desktop /usr/local/share/applications/
+	cp e8mon.py ${MONI_PATH0}/e8mon
+	chmod +x  ${MONI_PATH0}/e8mon
+	cp e8mon.desktop /usr/local/share/applications/
 
 clean: ${OBJ}
 	rm -f $<
 
 uninstall:
 	rm -f ${MONI_PATH1}/onchip_mon.o
-	rm -f ${MONI_PATH0}/emb88-monitor
-	rm -f /usr/local/share/applications/emb88-monitor.desktop
+	rm -f ${MONI_PATH0}/e8mon
+	rm -f /usr/local/share/applications/e8mon.desktop
 
 %.o:    %.c Makefile
 	${CC}  -c  $< -o $@ ${CFLAGS}

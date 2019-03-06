@@ -2,9 +2,9 @@
 Version=1.0
 Type=Application
 Name=EMB88-Monitor
-Exec=/usr/local/bin/emb88-monitor
+Exec=/usr/local/bin/e8mon
 Terminal=false
-Comment=EMB88-Monitor
+Comment=EMB-88 Monitor
 Categories=GTK;Development;
 Icon=edit-find.png
 
