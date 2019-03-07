@@ -20,16 +20,30 @@ import signal
 serial_dev='/dev/emb88'
 serial_baud=38400
 
-fnt='Inconsolata 18'
+fnt='Inconsolata 12'
 
 def setup_serial():
     global sdev
     sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
-    sdev.setDTR(False)  # これをしておかないとマイコンがスタートしないことがある
-    time.sleep(0.5)
-    # buffer flush
-    sdev.reset_input_buffer()
-    sdev.reset_output_buffer()
+
+    # DTR reset
+    sdev.dtr=False # Low
+    time.sleep(0.1)
+    sdev.dtr=True  # High
+    while True:
+        time.sleep(0.1)
+        if sdev.read(1)==b'=':
+            sdev.write(b'/') # Send START Signal
+            sdev.flush()
+            
+            time.sleep(0.1)  
+            sdev.reset_input_buffer()
+            time.sleep(0.1)
+            sdev.reset_output_buffer()
+            time.sleep(0.1)
+
+            break
+
 
 class MonitorWindow(Gtk.Window):
 
@@ -137,8 +151,11 @@ class MonitorWindow(Gtk.Window):
         self.lbl.modify_font(Pango.FontDescription(fnt))
         self.lbl.set_xalign(1) # 右寄りでラベル表示
         vbox.pack_start(self.lbl, False, False, 0)
+
+        setup_serial()
+        
         # タイマースタート
-        GObject.timeout_add(1000, self.mytimer)
+        GObject.timeout_add(100, self.mytimer)
         self.t0=time.time()
 
     def mytimer(self):
@@ -248,8 +265,17 @@ class MonitorWindow(Gtk.Window):
             return int.from_bytes( sdev.read(N), 'little')
         except:
             # タイムアウトなどが起きたときは
-            sdev.reset_input_buffer()
-            sdev.reset_output_buffer()
+            # print(sdev.in_waiting)
+            # print(sdev.out_waiting)
+
+            while sdev.in_waiting != 0:
+                sdev.reset_input_buffer()
+                time.sleep(0.1)
+                
+            while sdev.out_waiting != 0:
+                # print(sdev.out_waiting)
+                sdev.reset_output_buffer() #### FIX ME: SLOW ???
+                time.sleep(0.1)                
             return 0
 
 
@@ -264,9 +290,11 @@ class MonitorWindow(Gtk.Window):
         except:
             # タイムアウトなどが起きたときは
             sdev.reset_input_buffer()
+            time.sleep(0.1)
             sdev.reset_output_buffer()
-
-setup_serial()
+            time.sleep(0.1)
+            sdev.flush()
+            
 win = MonitorWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
