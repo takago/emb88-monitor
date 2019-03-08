@@ -158,8 +158,10 @@ class MonitorWindow(Gtk.Window):
         btn.modify_font(Pango.FontDescription(fnt))
         btn.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#DDD'))
         btn.modify_fg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#000'))
-        btn.modify_bg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#C35'))
-        btn.modify_fg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#FFF'))
+        # btn.modify_bg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#C35'))
+        # btn.modify_fg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#FFF'))
+        btn.modify_bg(Gtk.StateFlags.PRELIGHT, Gdk.color_parse('#C35'))
+        btn.modify_fg(Gtk.StateFlags.PRELIGHT, Gdk.color_parse('#FFF'))
         btn.name='rst'
         btn.connect("clicked", self.on_push)
         vbox.pack_start(btn, False, False, 0)
@@ -255,7 +257,7 @@ class MonitorWindow(Gtk.Window):
         if widget.name == 'rst':
             GObject.source_remove(self.timer_id) # タイマ停止（レジスタアクセスが止まる）
             reset_emb88(True)
-            self.timer_id = GObject.timeout_add(100, self.mytimer) # タイマ再開(レジスタアクセスが始まる)
+            self.timer_id = GObject.timeout_add(10, self.mytimer) # タイマ再開(レジスタアクセスが始まる)
 
     def on_button_press(self, widget, ev, data=None):
             # print(ev.button)
