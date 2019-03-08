@@ -154,17 +154,15 @@ class MonitorWindow(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         vbox.pack_start(hbox, True, True, 0)
 
-        btn = Gtk.Button.new_with_label("RESET")
+        btn = Gtk.Button.new_with_label("RESET EMB-88")
         btn.modify_font(Pango.FontDescription(fnt))
+        btn.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#DDD'))
+        btn.modify_fg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#000'))
+        btn.modify_bg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#C35'))
+        btn.modify_fg(Gtk.StateFlags.ACTIVE, Gdk.color_parse('#FFF'))
         btn.name='rst'
-        btn.connect("clicked", self.on_rst_int_clicked)
-        hbox.pack_start(btn, False, False, 0)
-
-        btn = Gtk.Button.new_with_label("INT")
-        btn.modify_font(Pango.FontDescription(fnt))
-        btn.name='int'
-        btn.connect("clicked", self.on_rst_int_clicked)
-        hbox.pack_start(btn, False, False, 0)
+        btn.connect("clicked", self.on_push)
+        vbox.pack_start(btn, False, False, 0)
 
         self.lbl = Gtk.Label('')
         self.lbl.modify_font(Pango.FontDescription(fnt))
@@ -253,15 +251,11 @@ class MonitorWindow(Gtk.Window):
                 widget.auto_update=False
                 widget.set_text('')
 
-    def on_rst_int_clicked(self, widget):
-        if self.timer_id != -1:
-            GObject.source_remove(self.timer_id) # タイマ停止（レジスタアクセスが止まる）
-            self.timer_id = -1
+    def on_push(self, widget):
         if widget.name == 'rst':
+            GObject.source_remove(self.timer_id) # タイマ停止（レジスタアクセスが止まる）
             reset_emb88(True)
             self.timer_id = GObject.timeout_add(100, self.mytimer) # タイマ再開(レジスタアクセスが始まる)
-        else:
-            reset_emb88(False)
 
     def on_button_press(self, widget, ev, data=None):
             # print(ev.button)
