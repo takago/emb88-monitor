@@ -22,28 +22,35 @@ serial_baud=38400
 
 fnt='Inconsolata 12'
 
-def setup_serial():
-    global sdev
-    sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
-
+def reset_emb88(restart):
     # DTR reset
     sdev.dtr=False # Low
     time.sleep(0.1)
     sdev.dtr=True  # High
-    while True:
+    while restart:
         time.sleep(0.1)
         if sdev.read(1)==b'=':
             sdev.write(b'/') # Send START Signal
             sdev.flush()
-            
-            time.sleep(0.1)  
-            sdev.reset_input_buffer()
             time.sleep(0.1)
-            sdev.reset_output_buffer()
-            time.sleep(0.1)
-
             break
+    clear_sdev_buff()
 
+def clear_sdev_buff():
+    # print(sdev.in_waiting, sdev.out_waiting) # バッファの使用状況
+    while sdev.in_waiting != 0:
+        sdev.reset_input_buffer()
+        time.sleep(0.1)
+
+    while sdev.out_waiting != 0:
+        # print(sdev.out_waiting)
+        sdev.reset_output_buffer() #### FIX ME: マイコンのリセットボタンを押すと何故か4秒ほどかかる(VMでは問題なし)
+        time.sleep(0.1)
+
+def setup_serial():
+    global sdev
+    sdev = serial.Serial( serial_dev, serial_baud, timeout=0.1, write_timeout=0.1 )
+    reset_emb88(True)
 
 class MonitorWindow(Gtk.Window):
 
@@ -137,8 +144,8 @@ class MonitorWindow(Gtk.Window):
                 self.entry[reg_name].set_max_length(2*N)
                 self.entry[reg_name].set_width_chars(2*N)
                 self.entry[reg_name].modify_font(Pango.FontDescription(fnt))
-                self.entry[reg_name].connect("key-press-event", self.on_key_press)
-                self.entry[reg_name].connect("button-press-event", self.on_button_press)
+                self.entry[reg_name].connect("key-press-event", self.on_key_press) # キーボードイベント
+                self.entry[reg_name].connect("button-press-event", self.on_button_press) # マウスボタンイベント
                 hbox.pack_start(self.entry[reg_name], False, False, 0)
 
         hseparator = Gtk.Separator(orientation=Gtk.Orientation.HORIZONTAL)
@@ -147,13 +154,25 @@ class MonitorWindow(Gtk.Window):
         hbox = Gtk.Box(orientation=Gtk.Orientation.HORIZONTAL, spacing=0)
         vbox.pack_start(hbox, True, True, 0)
 
+        btn = Gtk.Button.new_with_label("RESET")
+        btn.modify_font(Pango.FontDescription(fnt))
+        btn.name='rst'
+        btn.connect("clicked", self.on_rst_int_clicked)
+        hbox.pack_start(btn, False, False, 0)
+
+        btn = Gtk.Button.new_with_label("INT")
+        btn.modify_font(Pango.FontDescription(fnt))
+        btn.name='int'
+        btn.connect("clicked", self.on_rst_int_clicked)
+        hbox.pack_start(btn, False, False, 0)
+
         self.lbl = Gtk.Label('')
         self.lbl.modify_font(Pango.FontDescription(fnt))
         self.lbl.set_xalign(1) # 右寄りでラベル表示
         vbox.pack_start(self.lbl, False, False, 0)
 
         setup_serial()
-        
+
         # タイマースタート
         GObject.timeout_add(100, self.mytimer)
         self.t0=time.time()
@@ -199,7 +218,7 @@ class MonitorWindow(Gtk.Window):
                 else:
                     widget.modify_bg(Gtk.StateFlags.NORMAL, Gdk.color_parse('#DDD'))
             widget.set_text(dat)
-        GObject.timeout_add(10, self.mytimer) # 10ms後に呼び出す
+        self.timer_id = GObject.timeout_add(10, self.mytimer) # 10ms後に呼び出す
 
     def on_key_press(self, widget, ev, data=None):
         #print(ev.keyval)
@@ -234,6 +253,16 @@ class MonitorWindow(Gtk.Window):
                 widget.auto_update=False
                 widget.set_text('')
 
+    def on_rst_int_clicked(self, widget):
+        if self.timer_id != -1:
+            GObject.source_remove(self.timer_id) # タイマ停止（レジスタアクセスが止まる）
+            self.timer_id = -1
+        if widget.name == 'rst':
+            reset_emb88(True)
+            self.timer_id = GObject.timeout_add(100, self.mytimer) # タイマ再開(レジスタアクセスが始まる)
+        else:
+            reset_emb88(False)
+
     def on_button_press(self, widget, ev, data=None):
             # print(ev.button)
             if ev.button==1:
@@ -259,42 +288,23 @@ class MonitorWindow(Gtk.Window):
     def read_reg(self, adr, N):
         try:
             sdev.write(b'\x00')
-            sdev.flush()
             sdev.write(adr.to_bytes(1,'big'))
             sdev.flush()
             return int.from_bytes( sdev.read(N), 'little')
-        except:
-            # タイムアウトなどが起きたときは
-            # print(sdev.in_waiting)
-            # print(sdev.out_waiting)
-
-            while sdev.in_waiting != 0:
-                sdev.reset_input_buffer()
-                time.sleep(0.1)
-                
-            while sdev.out_waiting != 0:
-                # print(sdev.out_waiting)
-                sdev.reset_output_buffer() #### FIX ME: SLOW ???
-                time.sleep(0.1)                
+        except:# タイムアウトなどが起きたときは
+            clear_sdev_buff()
             return 0
 
 
     def write_reg(self, adr, val, N):
         try:
             sdev.write(b'\x01')
-            sdev.flush()
             sdev.write(adr.to_bytes(1,'big'))
-            sdev.flush()
             sdev.write(val.to_bytes(N,'big'))
             sdev.flush()
-        except:
-            # タイムアウトなどが起きたときは
-            sdev.reset_input_buffer()
-            time.sleep(0.1)
-            sdev.reset_output_buffer()
-            time.sleep(0.1)
-            sdev.flush()
-            
+        except: # タイムアウトなどが起きたときは
+            clear_sdev_buff()
+
 win = MonitorWindow()
 win.connect("destroy", Gtk.main_quit)
 win.show_all()
